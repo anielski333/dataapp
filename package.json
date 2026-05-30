@@ -1,0 +1,25 @@
+{
+  "name": "sales-dataorganizer",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @sales-dataorganizer/api --filter @sales-dataorganizer/web dev",
+    "dev:api": "pnpm --filter @sales-dataorganizer/api dev",
+    "dev:web": "pnpm --filter @sales-dataorganizer/web dev",
+    "build": "pnpm --filter @sales-dataorganizer/api build && pnpm --filter @sales-dataorganizer/web build",
+    "db:generate": "pnpm --filter @sales-dataorganizer/api db:generate",
+    "db:push": "pnpm --filter @sales-dataorganizer/api db:push",
+    "db:seed": "pnpm --filter @sales-dataorganizer/api db:seed"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  }
+}

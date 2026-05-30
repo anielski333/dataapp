@@ -1,0 +1,308 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model SalesChannel {
+  id        String   @id
+  name      String
+  market    String
+  currency  String   @default("PLN")
+  createdAt DateTime @default(now())
+
+  metrics      SalesDailyMetric[]
+  integrations IntegrationAccount[]
+}
+
+model SalesDailyMetric {
+  id                 String   @id @default(cuid())
+  channelId          String
+  date               DateTime
+  revenueNet         Float
+  totalCost          Float
+  productCost        Float
+  mediaCost          Float
+  additionalCost     Float
+  marketplaceCost    Float
+  discounts          Float
+  orders             Int
+  unitsSold          Int
+  newCustomers       Int
+  returningCustomers Int
+  sessions           Int
+  productViews       Int
+  addToCart          Int
+  checkoutStarted    Int
+  transactions       Int
+  impressions        Int
+  clicks             Int
+  adConversions      Int
+
+  channel SalesChannel @relation(fields: [channelId], references: [id])
+
+  @@unique([channelId, date])
+  @@index([date])
+}
+
+model TrafficDailyMetric {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  channelId            String?
+  integrationAccountId String?
+  propertyId           String
+  date                 DateTime
+  totalUsers           Int      @default(0)
+  activeUsers          Int      @default(0)
+  sessions             Int      @default(0)
+  engagedSessions      Int      @default(0)
+  views                Int      @default(0)
+  productViews         Int      @default(0)
+  addToCart            Int      @default(0)
+  checkoutStarted      Int      @default(0)
+  transactions         Int      @default(0)
+  purchaseRevenue      Float    @default(0)
+  currency             String   @default("PLN")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([organizationId, channelId, propertyId, date])
+  @@index([organizationId, date])
+  @@index([integrationAccountId])
+}
+
+model TrafficAttributionMetric {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  channelId            String?
+  integrationAccountId String?
+  propertyId           String
+  date                 DateTime
+  source               String
+  medium               String
+  campaign             String
+  sessions             Int      @default(0)
+  views                Int      @default(0)
+  transactions         Int      @default(0)
+  purchaseRevenue      Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([organizationId, channelId, propertyId, date, source, medium, campaign])
+  @@index([organizationId, date])
+}
+
+model TrafficEventMetric {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  channelId            String?
+  integrationAccountId String?
+  propertyId           String
+  date                 DateTime
+  eventName            String
+  eventCount           Int      @default(0)
+  totalUsers           Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([organizationId, channelId, propertyId, date, eventName])
+  @@index([organizationId, date])
+}
+
+model TrafficProductMetric {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  channelId            String?
+  integrationAccountId String?
+  propertyId           String
+  date                 DateTime
+  itemId               String
+  itemName             String
+  views                Int      @default(0)
+  addToCart            Int      @default(0)
+  purchases            Int      @default(0)
+  itemRevenue          Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([organizationId, channelId, propertyId, date, itemId])
+  @@index([organizationId, date])
+}
+
+model SalesProduct {
+  id          String   @id
+  name        String
+  sku         String
+  channelId   String
+  revenueNet  Float
+  unitsSold   Int
+  conversion  Float
+  margin      Float
+  price       Float
+  productCost Float
+  changePct   Float
+  createdAt   DateTime @default(now())
+}
+
+model SalesCampaign {
+  id          String   @id
+  provider    String
+  name        String
+  spend       Float
+  revenue     Float
+  impressions Int
+  clicks      Int
+  conversions Int
+  createdAt   DateTime @default(now())
+}
+
+model SalesCampaignDailyMetric {
+  id           String   @id
+  campaignId   String
+  provider     String
+  campaignName String
+  channelId    String
+  date         DateTime
+  spend        Float    @default(0)
+  revenue      Float    @default(0)
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  source       String   @default("CSV/import")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([date])
+  @@index([provider, date])
+  @@index([channelId, date])
+}
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  title     String
+  createdAt DateTime    @default(now())
+  messages  AiMessage[]
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  role           String
+  content        String
+  createdAt      DateTime       @default(now())
+  conversation   AiConversation @relation(fields: [conversationId], references: [id])
+}
+
+model IntegrationAccount {
+  id                  String    @id @default(cuid())
+  organizationId      String
+  provider            String
+  name                String
+  status              String    @default("DISCONNECTED")
+  channelId           String?
+  externalAccountId   String?
+  externalAccountType String?
+  externalAccountName String?
+  accessTokenEnc      String?
+  refreshTokenEnc     String?
+  tokenExpiresAt      DateTime?
+  scopesJson          String    @default("[]")
+  metadataJson        String?
+  settingsJson        String?
+  lastTestAt          DateTime?
+  lastSyncAt          DateTime?
+  lastErrorCode       String?
+  lastErrorMessage    String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  channel  SalesChannel?        @relation(fields: [channelId], references: [id])
+  configs  IntegrationConfig[]
+  secrets  IntegrationSecret[]
+  mappings IntegrationMapping[]
+
+  @@index([organizationId, provider])
+  @@index([organizationId, status])
+  @@index([channelId])
+}
+
+model IntegrationConfig {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  integrationAccountId String?
+  provider             String
+  configType           String
+  key                  String
+  valueJson            String
+  rawPayloadJson       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  integration IntegrationAccount? @relation(fields: [integrationAccountId], references: [id])
+
+  @@unique([organizationId, provider, configType, key])
+  @@index([organizationId, provider])
+  @@index([integrationAccountId])
+}
+
+model IntegrationSecret {
+  id                   String    @id @default(cuid())
+  organizationId       String
+  integrationAccountId String?
+  provider             String
+  secretType           String
+  key                  String
+  status               String    @default("NEEDS_CONFIGURATION")
+  secretRef            String?
+  maskedValue          String?
+  fingerprint          String?
+  expiresAt            DateTime?
+  lastRotatedAt        DateTime?
+  metadataJson         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  integration IntegrationAccount? @relation(fields: [integrationAccountId], references: [id])
+
+  @@unique([organizationId, provider, secretType, key])
+  @@index([organizationId, status])
+  @@index([integrationAccountId])
+}
+
+model IntegrationMapping {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  integrationAccountId String?
+  provider             String
+  mappingType          String
+  sourceValue          String
+  targetValue          String
+  isDefault            Boolean  @default(false)
+  rawPayloadJson       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  integration IntegrationAccount? @relation(fields: [integrationAccountId], references: [id])
+
+  @@unique([organizationId, provider, mappingType, sourceValue])
+  @@index([organizationId, provider])
+  @@index([integrationAccountId])
+}
+
+model IntegrationLog {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  provider           String
+  operation          String
+  status             String
+  errorMessage       String?
+  externalStatusCode Int?
+  requestPayloadJson String?
+  responsePayloadJson String?
+  createdAt          DateTime @default(now())
+
+  @@index([organizationId, provider])
+}
